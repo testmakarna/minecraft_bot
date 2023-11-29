@@ -1,0 +1,1 @@
+içine istediğim boku yazdım
