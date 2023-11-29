@@ -14,9 +14,10 @@
 <h3>
 <ul>
   <li>TestMakarna MölPi</li>
-  <li>Erdobeats/placeholder</li>
-  <li>Umut/placeholder</li>
+  <li>Erdem Demir ErdoBeats</li>
+  <li>Umtuxd</li>
 </ul>
+</h3>
 </h3>
 <h2>Requierments</h2>
 <h3>
