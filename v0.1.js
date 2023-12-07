@@ -14,7 +14,7 @@ const options = {
     // should be changed from the gui in the final version
 
     host: 'localhost',
-    port: 64391,
+    port: 51203,
     username: 'Obamakarna314', // if bot gona join real minecraft servers it will need a real minecraft account username and password
     //  password: 
     version: '1.19',
@@ -53,6 +53,11 @@ function itemByName (items, name) {
     return null
 }
 
+function itemByName_toss (name) {
+    const items = bot.inventory.items()
+    if (bot.registry.isNewerOrEqualTo('1.9') && bot.inventory.slots[45]) items.push(bot.inventory.slots[45])
+    return items.filter(item => item.name === name)[0]
+}
 function sayItems (items = bot.inventory.items()) {
     const output = items.map(itemToString).join(', ')
     if (output) {
@@ -68,6 +73,24 @@ bot.on('chat',(username,message)=>{
     }
 })
 
+async function tossItem (name, amount) {
+    amount = parseInt(amount, 10)
+    const item = itemByName_toss(name)
+    if (!item) {
+      bot.chat(`I have no ${name}`)
+    } else {
+      try {
+        if (amount) {
+          await bot.toss(item.type, null, amount)
+        } else {
+          await bot.tossStack(item)
+        }
+      } catch (err) {
+        bot.chat(`unable to toss: ${err.message}`)
+
+      }
+    }
+}//________________________________
 
 bot.loadPlugin(pathfinder);
 
@@ -83,6 +106,34 @@ function go_to_base_promise() {
     });
 }
 
+function followPlayer_promise(username, message) {
+  return new Promise((resolve, reject) => {
+      const player = bot.players[username];
+
+      if (!player || !player.entity) {
+          bot.chat("I can't see CI!")
+          reject("Player not found or has no entity");
+      } else {
+          const mcData = require('minecraft-data')(bot.version)
+          const movements = new Movements(bot, mcData)
+
+          bot.pathfinder.setMovements(movements)
+
+          const goal = new GoalFollow(player.entity, 1)
+          bot.pathfinder.setGoal(goal, false)
+
+          bot.on('goal_reached', (goal) => {
+              if (goal instanceof GoalFollow) {
+                  bot.chat("I am here");
+                  resolve("Successfully started following the player");
+              }
+          });
+
+          
+      }
+  });
+}
+
 async function take_items_from_base(username,message){
     message = message.split(" "); // !getfrombase torch 64
     blocks = ['chest', 'ender_chest', 'trapped_chest']
@@ -92,20 +143,18 @@ async function take_items_from_base(username,message){
         maxDistance: 6
       })
       if (!chestToOpen) {
-        bot.chat('no chest found')
         return
       }
     
     const chest = await bot.openContainer(chestToOpen)
-    sayItems(chest.containerItems())
+    // sayItems(chest.containerItems())
     chest.on('updateSlot', (slot, oldItem, newItem) => {
-      bot.chat(`chest update: ${itemToString(oldItem)} -> ${itemToString(newItem)} (slot: ${slot})`)
     })
     chest.on('close', () => {
-      bot.chat('chest closed')
     })
 
     withdrawItem(message[1], message[2]);
+    console.log("message1"+message[1]+" mesagge2"+ message[2])
     closeChest();
     function closeChest () {
         chest.close()
@@ -115,21 +164,22 @@ async function take_items_from_base(username,message){
         if (item) {
           try {
             await chest.withdraw(item.type, null, amount)
-            bot.chat(`withdrew ${amount} ${item.name}`)
           } catch (err) {
-            bot.chat(`unable to withdraw ${amount} ${item.name}`)
           }
         } else {
-          bot.chat(`unknown item ${name}`)
         }
       }
 }
 
 bot.on('chat',async(username,message)=>{
     command = message.split(" ");
-    if (command[0] == "!getfrombase"){
+    if (command[0] == "!getfrombase"){ // 
         await go_to_base_promise(); // Wait for the bot to reach its destination
-        take_items_from_base(username,message)
+        take_items_from_base(username,message);
+        await followPlayer_promise(username,message);
+        console.log("0 " + command[0]+"1 " + command[1] + "2 " + command[2])
+        await tossItem(command[1],command[2]);
+        console.log("tossed");
     }
 }) 
 
