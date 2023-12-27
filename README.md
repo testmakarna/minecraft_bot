@@ -1,6 +1,8 @@
 <h1>Minecraft Bot</h1><br>
-development on temporary hold until 02/02/2024
-<h2>Features</h2><br>
+<h2>
+development on temporary hold until further notice
+</h2>
+  <h2>Features</h2><br>
 <h3>
 <ul>
   <li>Path finding</li>
